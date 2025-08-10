@@ -1,0 +1,7 @@
+# secrets
+.env
+.env.*     # если будут env для разных окружений
+
+# pycache etc
+__pycache__/
+*.pyc
