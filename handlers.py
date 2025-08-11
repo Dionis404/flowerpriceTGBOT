@@ -1,16 +1,20 @@
 # handlers.py
-from aiogram import Router, types
-from config import CHAT_LINK
+from aiogram import types
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-router = Router()
+async def private_message_handler(message: types.Message):
+    """
+    Обработчик личных сообщений.
+    Отвечает только в приватному чату и предлагает ссылку на групповой чат.
+    """
+    if message.chat.type != "private":
+        return
 
-@router.message(lambda msg: msg.chat.type == "private")
-async def handle_private_message(message: types.Message):
-    """
-    Обработка ЛС — бот отвечает и отправляет в нужный чат.
-    """
-    text = (
-        "🚫 У меня нет желания общаться с фермерами!\n"
-        f"👉 Пиши в чат: {CHAT_LINK}"
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Перейти в чат", url="https://t.me/+fhJvtNvdAttkNTky")
+
+    await message.answer(
+        "🚫 У меня нет желания общаться с фермерами!\n\n"
+        "👉 Пиши в чат:",
+        reply_markup=kb.as_markup()
     )
-    await message.answer(text, parse_mode="HTML")
