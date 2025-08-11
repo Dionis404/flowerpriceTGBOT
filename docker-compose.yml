@@ -9,3 +9,8 @@ services:
       - .env
     volumes:
       - .:/app
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
