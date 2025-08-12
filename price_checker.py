@@ -167,29 +167,23 @@ async def check_price_and_notify(bot: Bot):
         old = last.get(c)
         new = current.get(c)
         if old is None:
-            line = f"{emoji_map.get(c,'')} {c.upper()}: — → {new:.6f}"
+            line = f"{emoji_map.get(c,'')} {c.upper()}: — → {new:.2f}"
         else:
             pct = ((new - old) / old) * 100 if old != 0 else 0.0
             sign = "+" if pct > 0 else ""
-            line = f"{emoji_map.get(c,'')} {c.upper()}: {old:.6f} → {new:.6f} ({sign}{pct:.2f}%)"
+            line = f"{emoji_map.get(c,'')} {c.upper()}: {old:.2f} → {new:.2f} ({sign}{pct:.2f}%)"
         lines.append(line)
 
     # Если цена выросла, используем случайный шаблон ответа
     if trigger_percent > 0:
         template = random.choice(PRICE_UP_RESPONSE_TEMPLATES)
         currency_lines = "\n".join(lines)
-        caption = (
-            template.format(currency_lines=currency_lines)
-            + f"\n\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
-        )
+        caption = template.format(currency_lines=currency_lines)
     else:
         # Если цена упала, используем случайный шаблон ответа
         template = random.choice(PRICE_DOWN_RESPONSE_TEMPLATES)
         currency_lines = "\n".join(lines)
-        caption = (
-            template.format(currency_lines=currency_lines)
-            + f"\n\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
-        )
+        caption = template.format(currency_lines=currency_lines)
 
     # Отправляем уведомления во все группы
     group_ids = get_group_ids()

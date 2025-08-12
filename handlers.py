@@ -59,7 +59,13 @@ async def price_command_handler(message: types.Message):
     current = await fetch_current_prices()
     
     if current is None:
-        await message.answer("❌ Не удалось получить текущий курс. Попробуйте позже.")
+        # Список вариантов ответов при ошибке получения курса
+        PRICE_ERROR_TEMPLATES = [
+            "❌ Даже мои казначеи не смогли добыть данные о курсе. Вернитесь, когда они перестанут бездельничать.",
+            "❌ Курс недоступен. Видимо, ваши жалкие рынки сегодня спят. Попробуйте позже.",
+            "❌ Не удалось узнать курс. Моё терпение ограничено, так что приходите, когда будет информация."
+        ]
+        await message.answer(random.choice(PRICE_ERROR_TEMPLATES))
         logger.warning("Не удалось получить текущий курс для пользователя %s (%s) из чата %s (%s)",
                          message.from_user.username, message.from_user.id,
                          message.chat.title, message.chat.id)
@@ -71,7 +77,7 @@ async def price_command_handler(message: types.Message):
     for c in CURRENCIES:
         price = current.get(c)
         if price is not None:
-            line = f"{emoji_map.get(c,'')} {c.upper()}: {price:.6f}"
+            line = f"{emoji_map.get(c,'')} {c.upper()}: {price:.2f}"
         else:
             line = f"{emoji_map.get(c,'')} {c.upper()}: —"
         lines.append(line)
@@ -79,10 +85,7 @@ async def price_command_handler(message: types.Message):
     # Выбираем случайный шаблон ответа и подставляем в него курсы
     template = random.choice(PRICE_RESPONSE_TEMPLATES)
     currency_lines = "\n".join(lines)
-    caption = (
-        template.format(currency_lines=currency_lines)
-        + f"\n\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
-    )
+    caption = template.format(currency_lines=currency_lines)
     
     await message.answer(caption)
     logger.info("Отправлен курс пользователю %s (%s) из чата %s (%s)",

@@ -29,11 +29,11 @@ def format_currency_lines(current: Dict[str, float], last: Optional[Dict[str, fl
         old = last.get(c) if last else None
         new = current.get(c)
         if old is None:
-            line = f"{CURRENCY_EMOJI_MAP.get(c, '')} {c.upper()}: — → {new:.6f}"
+            line = f"{CURRENCY_EMOJI_MAP.get(c, '')} {c.upper()}: — → {new:.2f}"
         else:
             pct = ((new - old) / old) * 100 if old != 0 else 0.0
             sign = "+" if pct > 0 else ""
-            line = f"{CURRENCY_EMOJI_MAP.get(c, '')} {c.upper()}: {old:.6f} → {new:.6f} ({sign}{pct:.2f}%)"
+            line = f"{CURRENCY_EMOJI_MAP.get(c, '')} {c.upper()}: {old:.2f} → {new:.2f} ({sign}{pct:.2f}%)"
         lines.append(line)
     
     return "\n".join(lines)
