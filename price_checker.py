@@ -43,12 +43,13 @@ PRICE_DOWN_RESPONSE_TEMPLATES = [
 {currency_lines}
 Так что готовьтесь платить… и платить щедро."""
 ]
-
 from aiogram import Bot
 from config import (
-    COIN_ID, PRICE_CHANGE_THRESHOLD, CHECK_INTERVAL,
-    GROUP_CHAT_ID, UP_IMAGE, DOWN_IMAGE
+    COIN_ID, UP_IMAGE, DOWN_IMAGE
 )
+from settings import load_settings, load_groups, get_group_ids
+from utils import format_currency_lines
+
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +141,12 @@ async def check_price_and_notify(bot: Bot):
         pct = ((new - old) / old) * 100
         changes[c] = pct
 
+    # Загружаем настройки
+    settings = load_settings()
+    price_change_threshold = settings.get("price_change_threshold", 15.0) if settings else 15.0
+    
     # Собираем те валюты, которые превысили порог
-    triggers = {c: pct for c, pct in changes.items() if abs(pct) >= PRICE_CHANGE_THRESHOLD}
+    triggers = {c: pct for c, pct in changes.items() if abs(pct) >= price_change_threshold}
 
     if not triggers:
         # Ничего не сработало — просто сохраняем новую цену
@@ -178,8 +183,7 @@ async def check_price_and_notify(bot: Bot):
             + f"\n\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
         )
     else:
-    # Если цена упала, используем случайный шаблон ответа
-    else:
+        # Если цена упала, используем случайный шаблон ответа
         template = random.choice(PRICE_DOWN_RESPONSE_TEMPLATES)
         currency_lines = "\n".join(lines)
         caption = (
@@ -187,25 +191,32 @@ async def check_price_and_notify(bot: Bot):
             + f"\n\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
         )
 
-    # Отправляем: если картинка есть — отправляем фото с подписью, иначе простое сообщение
-    try:
-        if os.path.exists(img_path):
-            # Проверяем, что файл изображения не пустой
-            if os.path.getsize(img_path) > 0:
-                with open(img_path, "rb") as ph:
-                    await bot.send_photo(chat_id=GROUP_CHAT_ID, photo=ph, caption=caption)
-                    logger.info("Уведомление с изображением отправлено в группу")
+    # Отправляем уведомления во все группы
+    group_ids = get_group_ids()
+    if not group_ids:
+        # Если группы не настроены, отправляем в группу по умолчанию из config.py
+        from config import GROUP_CHAT_ID
+        group_ids = [GROUP_CHAT_ID]
+    
+    for group_id in group_ids:
+        try:
+            if os.path.exists(img_path):
+                # Проверяем, что файл изображения не пустой
+                if os.path.getsize(img_path) > 0:
+                    with open(img_path, "rb") as ph:
+                        await bot.send_photo(chat_id=group_id, photo=ph, caption=caption)
+                        logger.info("Уведомление с изображением отправлено в группу %s", group_id)
+                else:
+                    logger.warning("Файл изображения пустой: %s", img_path)
+                    await bot.send_message(chat_id=group_id, text=caption)
+                    logger.info("Уведомление без изображения отправлено в группу %s", group_id)
             else:
-                logger.warning("Файл изображения пустой: %s", img_path)
-                await bot.send_message(chat_id=GROUP_CHAT_ID, text=caption)
-                logger.info("Уведомление без изображения отправлено в группу")
-        else:
-            logger.warning("Файл изображения не найден: %s", img_path)
-            await bot.send_message(chat_id=GROUP_CHAT_ID, text=caption)
-            logger.info("Уведомление без изображения отправлено в группу")
-    except Exception:
-        # Не падаем при ошибке отправки — просто логируем в консоль
-        logger.error("Ошибка при отправке уведомления (группа):", exc_info=True)
+                logger.warning("Файл изображения не найден: %s", img_path)
+                await bot.send_message(chat_id=group_id, text=caption)
+                logger.info("Уведомление без изображения отправлено в группу %s", group_id)
+        except Exception as e:
+            # Не падаем при ошибке отправки — просто логируем в консоль
+            logger.error("Ошибка при отправке уведомления в группу %s: %s", group_id, e)
 
     # Сохраняем новую цену (в любом случае)
     save_last_price(current)
@@ -220,5 +231,10 @@ async def price_monitor_loop(bot: Bot):
             await check_price_and_notify(bot)
         except Exception as e:
             logger.error("Ошибка в price_monitor_loop: %s", e)
+        
+        # Загружаем интервал проверки из настроек
+        settings = load_settings()
+        check_interval = settings.get("check_interval", 60) if settings else 60
+        
         logger.debug("Ожидание следующей итерации мониторинга")
-        await asyncio.sleep(CHECK_INTERVAL)
+        await asyncio.sleep(check_interval)

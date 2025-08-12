@@ -1,0 +1,4 @@
+{
+  "price_change_threshold": 1.0,
+  "check_interval": 60
+}

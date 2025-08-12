@@ -5,7 +5,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from config import BOT_TOKEN, CHECK_INTERVAL
-from handlers import private_message_handler, price_command_handler
+from handlers import private_message_handler, price_command_handler, set_threshold_handler, add_group_handler, remove_group_handler, list_groups_handler, add_admin_handler, remove_admin_handler
 from price_checker import price_monitor_loop
 
 # Настройка логирования с более подробным форматом
@@ -27,7 +27,16 @@ dp.message.register(price_command_handler, Command("price"))
 
 # Регистрируем обработчик ЛС
 logger.info("Регистрация обработчика личных сообщений")
-dp.message.register(private_message_handler)  # aiogram 3.x стиль
+dp.message.register(private_message_handler, lambda message: message.chat.type == "private" and (not message.text or not message.text.startswith('/')))
+
+# Регистрируем обработчики новых команд
+logger.info("Регистрация обработчиков новых команд")
+dp.message.register(set_threshold_handler, Command("set_threshold"))
+dp.message.register(add_group_handler, Command("add_group"))
+dp.message.register(remove_group_handler, Command("remove_group"))
+dp.message.register(list_groups_handler, Command("list_groups"))
+dp.message.register(add_admin_handler, Command("add_admin"))
+dp.message.register(remove_admin_handler, Command("remove_admin"))
 
 
 @dp.shutdown()
