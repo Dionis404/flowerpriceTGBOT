@@ -1,6 +1,7 @@
 # settings.py
 import json
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -41,29 +42,48 @@ def save_settings(settings):
 def load_groups():
     """Загружает информацию о группах из файла groups.json"""
     try:
+        logger.debug("Попытка загрузки файла групп: %s", GROUPS_FILE)
+        if not os.path.exists(GROUPS_FILE):
+            logger.warning("Файл групп не существует: %s", GROUPS_FILE)
+            # Возвращаем структуру по умолчанию
+            default_groups = {
+                "admin_ids": [],
+                "group_chats": []
+            }
+            logger.debug("Возвращаем структуру групп по умолчанию: %s", default_groups)
+            return default_groups
+            
         with open(GROUPS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            logger.debug("Файл групп загружен успешно: %s", data)
+            return data
     except FileNotFoundError:
-        logger.warning("Файл групп не найден")
+        logger.warning("Файл групп не найден: %s", GROUPS_FILE)
         # Возвращаем структуру по умолчанию
-        return {
+        default_groups = {
             "admin_ids": [],
             "group_chats": []
         }
+        logger.debug("Возвращаем структуру групп по умолчанию: %s", default_groups)
+        return default_groups
     except Exception as e:
         logger.error("Ошибка при загрузке групп: %s", e)
         # Возвращаем структуру по умолчанию
-        return {
+        default_groups = {
             "admin_ids": [],
             "group_chats": []
         }
+        logger.debug("Возвращаем структуру групп по умолчанию из-за ошибки: %s", default_groups)
+        return default_groups
 
 
 def save_groups(groups):
     """Сохраняет информацию о группах в файл groups.json"""
     try:
+        logger.debug("Сохранение групп в файл: %s", groups)
         with open(GROUPS_FILE, "w", encoding="utf-8") as f:
             json.dump(groups, f, indent=2, ensure_ascii=False)
+        logger.debug("Группы успешно сохранены в файл: %s", GROUPS_FILE)
     except Exception as e:
         logger.warning("Ошибка при сохранении групп: %s", e)
 
@@ -123,6 +143,7 @@ def remove_admin(user_id):
 def add_group(group_id, group_name):
     """Добавляет новую группу в список"""
     try:
+        logger.info("Попытка добавления группы: ID=%s, имя=%s", group_id, group_name)
         groups = load_groups()
         if not groups:
             groups = {"admin_ids": [], "group_chats": []}
@@ -132,6 +153,7 @@ def add_group(group_id, group_name):
         
         # Проверяем, что группа еще не добавлена
         if any(group["id"] == group_id for group in groups["group_chats"]):
+            logger.warning("Группа с ID=%s уже существует", group_id)
             return False
         
         groups["group_chats"].append({
@@ -139,8 +161,11 @@ def add_group(group_id, group_name):
             "name": group_name
         })
         save_groups(groups)
+        logger.info("Группа добавлена успешно: ID=%s, имя=%s", group_id, group_name)
+        logger.info("Текущий список групп: %s", groups["group_chats"])
         return True
-    except Exception:
+    except Exception as e:
+        logger.error("Ошибка при добавлении группы: %s", e)
         return False
 
 
@@ -166,8 +191,13 @@ def get_group_ids():
     """Возвращает список ID всех групп"""
     try:
         groups = load_groups()
+        logger.debug("Загруженные группы: %s", groups)
         if groups and "group_chats" in groups:
-            return [group["id"] for group in groups["group_chats"]]
+            group_ids = [group["id"] for group in groups["group_chats"]]
+            logger.debug("Список ID групп: %s", group_ids)
+            return group_ids
+        logger.debug("Группы не найдены")
         return []
-    except Exception:
+    except Exception as e:
+        logger.error("Ошибка при получении списка групп: %s", e)
         return []

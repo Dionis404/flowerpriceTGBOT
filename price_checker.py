@@ -186,14 +186,21 @@ async def check_price_and_notify(bot: Bot):
         caption = template.format(currency_lines=currency_lines)
 
     # Отправляем уведомления во все группы
+    logger.info("Получение списка групп для отправки уведомлений")
     group_ids = get_group_ids()
+    logger.info("Список групп для отправки уведомлений: %s", group_ids)
     if not group_ids:
         # Если группы не настроены, отправляем в группу по умолчанию из config.py
         from config import GROUP_CHAT_ID
         group_ids = [GROUP_CHAT_ID]
+        logger.info("Группы не настроены, используем группу по умолчанию: %s", GROUP_CHAT_ID)
+    else:
+        logger.info("Используем все зарегистрированные группы: %s", group_ids)
     
+    logger.info("Начало отправки уведомлений в %d групп(ы)", len(group_ids))
     for group_id in group_ids:
         try:
+            logger.info("Отправка уведомления в группу %s", group_id)
             if os.path.exists(img_path):
                 # Проверяем, что файл изображения не пустой
                 if os.path.getsize(img_path) > 0:
@@ -211,6 +218,7 @@ async def check_price_and_notify(bot: Bot):
         except Exception as e:
             # Не падаем при ошибке отправки — просто логируем в консоль
             logger.error("Ошибка при отправке уведомления в группу %s: %s", group_id, e)
+    logger.info("Завершена отправка уведомлений в %d групп(ы)", len(group_ids))
 
     # Сохраняем новую цену (в любом случае)
     save_last_price(current)
