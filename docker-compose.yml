@@ -3,7 +3,7 @@ version: '3.8'
 services:
   my_bot:
     build: .
-    container_name: my_telegram_bot
+    container_name: tywin
     restart: always
     env_file:
       - .env
