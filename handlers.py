@@ -77,9 +77,9 @@ async def price_command_handler(message: types.Message):
     for c in CURRENCIES:
         price = current.get(c)
         if price is not None:
-            line = f"{emoji_map.get(c,'')} {c.upper()}: {price:.2f}"
+            line = f"{c.upper()}: {price:.4f}"
         else:
-            line = f"{emoji_map.get(c,'')} {c.upper()}: —"
+            line = f"{c.upper()}: —"
         lines.append(line)
     
     # Выбираем случайный шаблон ответа и подставляем в него курсы

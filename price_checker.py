@@ -175,11 +175,11 @@ async def check_price_and_notify(bot: Bot):
         old = last.get(c)
         new = current.get(c)
         if old is None:
-            line = f"{emoji_map.get(c,'')} {c.upper()}: — → {new:.2f}"
+            line = f"{c.upper()}: — → {new:.4f}"
         else:
             pct = ((new - old) / old) * 100 if old != 0 else 0.0
             sign = "+" if pct > 0 else ""
-            line = f"{emoji_map.get(c,'')} {c.upper()}: {old:.2f} → {new:.2f} ({sign}{pct:.2f}%)"
+            line = f"{c.upper()}: {old:.4f} → {new:.4f} ({sign}{pct:.2f}%)"
         lines.append(line)
 
     # Если цена выросла, используем случайный шаблон ответа
