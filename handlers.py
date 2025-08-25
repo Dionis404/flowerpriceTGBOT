@@ -73,7 +73,7 @@ async def price_command_handler(message: types.Message):
     
     # Формируем строки с курсами для подстановки в шаблон
     lines = []
-    emoji_map = {"usd": "🇺🇸", "rub": "🇷🇺", "uah": "🇺🇦"}
+    emoji_map = {"usd": ""}
     for c in CURRENCIES:
         price = current.get(c)
         if price is not None:

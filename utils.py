@@ -6,9 +6,7 @@ logger = logging.getLogger(__name__)
 
 # Сопоставление валют с эмодзи
 CURRENCY_EMOJI_MAP = {
-    "usd": "🇺🇸",
-    "rub": "🇷🇺", 
-    "uah": "🇺🇦"
+    "usd": ""
 }
 
 def format_currency_lines(current: Dict[str, float], last: Optional[Dict[str, float]] = None) -> str:
@@ -23,7 +21,7 @@ def format_currency_lines(current: Dict[str, float], last: Optional[Dict[str, fl
         str: Отформатированные строки с курсами
     """
     lines = []
-    currencies = ["usd", "rub", "uah"]
+    currencies = ["usd"]
     
     for c in currencies:
         old = last.get(c) if last else None
